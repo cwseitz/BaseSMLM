@@ -1,7 +1,8 @@
 import numpy as np
-from ..jac2d import jaciso2d
+from ..psf2d import jac1
 
-def jac1mix(x,y,theta,eta,texp,gain,var):
+def jac1mix(x,y,theta,cmos_params):
+    nspots = len(theta) // 4
     ntheta,nspots = theta.shape
-    jacblock = [jaciso2d(x,y,*theta[:,n],eta,texp,gain,var) for n in range(nspots)]
+    jacblock = [jac1(x,y,theta[:,n],cmos_params) for n in range(nspots)]
     return np.concatenate(jacblock)

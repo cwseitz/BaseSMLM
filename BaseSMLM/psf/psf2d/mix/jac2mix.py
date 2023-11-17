@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.special import erf
 
-def jac2mix(adu,X,Y,theta,eta,texp,gain,var):
+def jac2mix(adu,X,Y,theta,cmos_params):
     ntheta,nspots = theta.shape
+    eta,texp,gain,offset,var = cmos_params
     nlam = np.zeros_like(adu,dtype=np.float32)
     for n in range(nspots):
         x0,y0,sigma,N0 = theta[:,n]

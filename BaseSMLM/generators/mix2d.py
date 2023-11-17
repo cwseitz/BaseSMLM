@@ -33,10 +33,12 @@ class Mix2D:
 
     def generate(self,r=4,plot=False):
         gain, offset, var = self.cmos_params
+        self.nx,self.ny = offset.shape
         _xyz_np = []
         theta = np.zeros((4,self.config['particles']))
-        nx,ny = self.config['nx'],self.config['ny']
+        nx,ny = offset.shape
         xsamp,ysamp = self.sample_uniform_circle(nx/2,ny/2,r,self.config['particles'])
+        print(xsamp,ysamp)
         theta[0,:] = xsamp
         theta[1,:] = ysamp
         theta[2,:] = self.config['sigma']
@@ -59,10 +61,11 @@ class Mix2D:
         spikes = self.get_spikes(_xyz_np)
         if plot:
             self.show(srate,brate,electrons,adu)
+        adu = np.squeeze(adu)
         return adu, spikes, theta
 
     def get_brate(self):
-        nx,ny = self.config['nx'],self.config['ny']
+        nx,ny = self.nx,self.ny
         noise = PerlinNoise(octaves=1,seed=None)
         bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
         bg = 1 + np.array(bg)
@@ -70,9 +73,10 @@ class Mix2D:
         return brate
 
     def get_srate(self,theta,patch_hw=5):
+        nx,ny = self.nx,self.ny
         x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
         X,Y = np.meshgrid(x,y)
-        srate = np.zeros((self.config['nx'],self.config['ny']),dtype=np.float32)
+        srate = np.zeros((nx,ny),dtype=np.float32)
         xy_np = np.zeros((self.config['particles'],3))
         for n in range(self.config['particles']):
             x0,y0,sigma,N0 = theta[:,n]
@@ -90,11 +94,11 @@ class Mix2D:
                 
     def read_noise(self):
         gain, offset, var = self.cmos_params
-        noise = np.random.normal(offset,np.sqrt(var),size=(self.config['nx'],self.config['ny']))
+        noise = np.random.normal(offset,np.sqrt(var),size=(self.nx,self.ny))
         return noise
         
     def get_spikes(self,xyz_np,upsample=4):
-        grid_shape = (self.config['nx'],self.config['ny'],1)
+        grid_shape = (self.nx,self.ny,1)
         boolean_grid = batch_xyz_to_boolean_grid(xyz_np,
                                                  upsample,
                                                  self.config['pixel_size_lateral'],
@@ -264,23 +268,23 @@ class Mix2D_SR3_Ring:
         return xs,ys
 
     def generate(self,r=4,plot=False,patch_hw=5,ring_radius=3):
-        theta = np.zeros((4,self.config['particles']))
+        self.theta = np.zeros((4,self.config['particles']))
         nx,ny = self.config['lpixels'],self.config['lpixels']
         xsamp,ysamp = self.ring2d(self.config['particles'],radius=ring_radius)
         x0 = np.random.uniform(patch_hw+ring_radius,nx-patch_hw-ring_radius)
         y0 = np.random.uniform(patch_hw+ring_radius,ny-patch_hw-ring_radius)
-        theta[0,:] = xsamp + x0
-        theta[1,:] = ysamp + y0
-        theta[2,:] = self.config['sigma']
-        theta[3,:] = self.config['N0']
+        self.theta[0,:] = xsamp + x0
+        self.theta[1,:] = ysamp + y0
+        self.theta[2,:] = self.config['sigma']
+        self.theta[3,:] = self.config['N0']
 
-        adu_l = self.generate_l(theta,self.config['lpixels'],patch_hw=patch_hw)
+        adu_l = self.generate_l(self.theta,self.config['lpixels'],patch_hw=patch_hw)
         
-        theta[0,:] *= self.config['hpixels']/self.config['lpixels']
-        theta[1,:] *= self.config['hpixels']/self.config['lpixels']
-        theta[2,:] = 50/self.config['hpixel_size'] #in pixels
+        self.theta[0,:] *= self.config['hpixels']/self.config['lpixels']
+        self.theta[1,:] *= self.config['hpixels']/self.config['lpixels']
+        self.theta[2,:] = 50/self.config['hpixel_size'] #in pixels
         
-        adu_h = self.generate_h(theta,self.config['hpixels'])
+        adu_h = self.generate_h(self.theta,self.config['hpixels'])
 
         if plot:
             fig,ax=plt.subplots(1,2)

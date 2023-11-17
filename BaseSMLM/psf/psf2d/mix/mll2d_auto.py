@@ -4,6 +4,8 @@ from autograd.scipy.special import erf
 
 def mixloglike_auto(adu,eta,texp,gain,var,nspots):
     def mixloglike(theta,adu=adu,gain=gain,var=var):
+        ntheta,nspots = theta.shape
+        theta = theta.T.reshape((ntheta*nspots,))
         lx, ly = adu.shape
         X,Y = np.meshgrid(np.arange(0,lx),np.arange(0,ly))
         mu = np.zeros_like(adu)
