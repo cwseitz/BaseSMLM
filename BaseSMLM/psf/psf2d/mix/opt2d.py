@@ -5,7 +5,6 @@ from .mll2d import *
 from .mll2d_auto import *
 from .jac2d import *
 
-
 class IsoLogLikelihood:
     def __init__(self,func,cmos_params):
         self.func = func
@@ -31,7 +30,8 @@ class MLE2DMix:
            lr = [0.001,0.001,0,0]
         lr = np.array(lr)
         lr = lr[:,np.newaxis]
-        lr = np.repeat(lr,self.config['particles'],axis=1)
+        _,nspots = self.theta0.shape
+        lr = np.repeat(lr,nspots,axis=1)
         loglike = []
         theta = np.zeros_like(self.theta0)
         theta += self.theta0

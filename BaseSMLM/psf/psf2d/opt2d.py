@@ -15,15 +15,15 @@ class IsoLogLikelihood:
         return self.func(theta,adu,self.cmos_params)
 
 class MLE2D_MCMC:
-    def __init__(self,theta0,adu,setup_params,theta_gt=None):
+    def __init__(self,theta0,adu,config,theta_gt=None):
        self.theta0 = theta0
        self.theta_gt = theta_gt
        self.adu = adu
-       self.setup_params = setup_params
-       self.cmos_params = [setup_params['eta'],setup_params['texp'],
-                            np.load(setup_params['gain'])['arr_0'],
-                            np.load(setup_params['offset'])['arr_0'],
-                            np.load(setup_params['var'])['arr_0']]
+       self.config = config
+       self.cmos_params = [config['eta'],config['texp'],
+                            np.load(config['gain'])['arr_0'],
+                            np.load(config['offset'])['arr_0'],
+                            np.load(config['var'])['arr_0']]
                             
     def show(self,theta0,theta):
         fig,ax = plt.subplots(figsize=(4,4))
@@ -91,15 +91,15 @@ class MLE2D_MCMC:
         return theta, loglike, samples
 
 class MLE2D:
-    def __init__(self,theta0,adu,setup_params,theta_gt=None):
+    def __init__(self,theta0,adu,config,theta_gt=None):
        self.theta0 = theta0
        self.theta_gt = theta_gt
        self.adu = adu
-       self.setup_params = setup_params
-       self.cmos_params = [setup_params['eta'],setup_params['texp'],
-                            np.load(setup_params['gain'])['arr_0'],
-                            np.load(setup_params['offset'])['arr_0'],
-                            np.load(setup_params['var'])['arr_0']]
+       self.config = config
+       self.cmos_params = [config['eta'],config['texp'],
+                            np.load(config['gain'])['arr_0'],
+                            np.load(config['offset'])['arr_0'],
+                            np.load(config['var'])['arr_0']]
                             
     def show(self,theta0,theta):
         fig,ax = plt.subplots(figsize=(4,4))
