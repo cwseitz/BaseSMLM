@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import torch
 from scipy.special import erf
 
-"""This needs to be updated"""
-
 def mixloglike(theta,adu,cmos_params):
     eta,texp,gain,offset,var = cmos_params
     lx, ly = adu.shape

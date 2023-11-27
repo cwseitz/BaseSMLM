@@ -43,13 +43,13 @@ class Ring2D(Generator):
         adu = gain*self.shot_noise(mu)
         adu = self.read_noise(adu)
         if show: self.show(theta,mu,adu)
-        return adu
+        return adu,theta
 
     def shot_noise(self,rate):
         electrons = np.random.poisson(lam=rate)
         return electrons
 
-    def read_noise(self,adu,offset=100,variance=5):
+    def read_noise(self,adu,offset=0.0,variance=0.0):
         nx,ny = adu.shape
         noise = np.random.normal(offset,variance,size=(nx,ny))
         adu = adu + noise

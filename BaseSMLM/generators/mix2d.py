@@ -153,7 +153,7 @@ class Mix2D_Ring:
         patch_hw = self.config['patchw']
         nx,ny = offset.shape
         xsamp,ysamp = self.ring2d(self.config['particles'],radius=self.config['ring_radius'])
-        x0 = nx//2; y0 = ny//2
+        x0 = nx//2; y0 = ny//2 #move off center for testing
         theta[0,:] = xsamp + x0
         theta[1,:] = ysamp + y0
         theta[2,:] = self.config['sigma']
