@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from ..psf.psf2d.psf2d import *
-#import frc
+import frc
 from .kde import *
 
 class FRC:
@@ -9,14 +9,16 @@ class FRC:
         self.spots = spots
     def compute_frc(self,x_range,y_range,nsamples=1000,sigma=2.0,scale=0.1,plot_kde=False,plot_fft=False):
         #scale has units [pixels <length unit>^-1]
-        spots1 = self.spots.sample(nsamples)
+        spots1 = self.spots.sample(nsamples,replace=False)
         sampled_index = spots1.index
         self.spots = self.spots.drop(index=sampled_index)
-        spots2 = self.spots.sample(nsamples)
+        spots2 = self.spots.sample(nsamples,replace=False)
         
         kde1 = KDE(spots1); kde2 = KDE(spots2)
-        sr1 = kde1.get_kde(x_range,y_range,sigma=sigma)
-        sr2 = kde2.get_kde(x_range,y_range,sigma=sigma)
+        x_range = np.arange(x_range[0],x_range[1],1)
+        y_range = np.arange(y_range[0],y_range[1],1)
+        sr1 = kde1.get_kde(x_range=x_range,y_range=y_range,sigma=sigma)
+        sr2 = kde2.get_kde(x_range=x_range,y_range=y_range,sigma=sigma)
         
         if plot_kde:
             fig,ax=plt.subplots(2,1,sharex=True,sharey=True)

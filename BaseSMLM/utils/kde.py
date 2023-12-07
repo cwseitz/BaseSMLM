@@ -5,20 +5,23 @@ from ..psf.psf2d.psf2d import *
 class KDE:
     def __init__(self,spots):
         self.spots = spots
-    def get_kde(self,margin=100,pixel_size=108.3,kde_pixel_size=10.83,sigma=1.0,nxny=None):
+    def get_kde(self,margin=100,pixel_size=108.3,kde_pixel_size=10.83,sigma=1.0,nxny=None,x_range=None,y_range=None):
         patchw = int(round(3*sigma))
-        a = (pixel_size/kde_pixel_size)
+        a = int(pixel_size/kde_pixel_size)
         theta = a*self.spots[['x_mle','y_mle']].values
-        
-        if nxny is None:
-            theta[:,0] -= theta[:,0].min() #shift to zero
-            theta[:,1] -= theta[:,1].min()
-            x_range = theta[:,0].max() #total range
-            y_range = theta[:,1].max()
-            nx = int(np.ceil(x_range)); ny = int(np.ceil(y_range))
+                
+        if x_range is None:
+            if nxny is None:
+                theta[:,0] -= theta[:,0].min() #shift to zero
+                theta[:,1] -= theta[:,1].min()
+                x_range = theta[:,0].max() #total range
+                y_range = theta[:,1].max()
+                nx = int(np.ceil(x_range)); ny = int(np.ceil(y_range))
+            else:
+                nx = int(np.ceil(a*nxny[0]))
+                ny = int(np.ceil(a*nxny[1]))
         else:
-            nx = int(np.ceil(a*nxny[0]))
-            ny = int(np.ceil(a*nxny[1]))
+            nx = a*len(x_range); ny = a*len(y_range)
         
         kde = np.zeros((2*margin+nx,2*margin+ny),dtype=np.float32)
         
