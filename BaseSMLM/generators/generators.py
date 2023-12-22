@@ -65,7 +65,7 @@ class Ring2D(Generator):
 class Disc2D(Generator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
-    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=None,nframes=1,offset=100.0,var=5.0):
+    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=0.0,nframes=1,offset=100.0,var=5.0,show=False):
         density = Disc(radius)
         theta = np.zeros((4,nspots))
         x,y = density.sample(nspots)
@@ -78,7 +78,7 @@ class Disc2D(Generator):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b()
+                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -87,10 +87,22 @@ class Disc2D(Generator):
             adu = np.squeeze(adu)
             spikes = self.spikes(theta)
             _adu.append(adu); _spikes.append(spikes)
+            if show:
+                self.show(adu,muS,muB,theta)
         adu = np.squeeze(np.array(_adu))
         spikes = np.squeeze(np.array(_spikes))
         return adu,spikes,theta
-        
+
+    def show(self,adu,muS,muB,theta):
+        fig,ax=plt.subplots(1,3)
+        ax[0].invert_yaxis(); ax[1].invert_yaxis()
+        ax[0].imshow(adu,cmap='gray')
+        ax[1].imshow(muS,cmap='gray')
+        ax[2].imshow(muB,cmap='gray')
+        ax[0].scatter(theta[1,:],theta[0,:],color='red',marker='x')
+        ax[1].scatter(theta[1,:],theta[0,:],color='red',marker='x')
+        plt.show()       
+       
         
 class Ring2D_TwoState(TwoStateGenerator):
     def __init__(self,nx,ny):

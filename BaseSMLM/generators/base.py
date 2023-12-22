@@ -49,7 +49,7 @@ class Generator:
         self.ny = ny
     def _mu_s(self,theta,texp=1.0,eta=1.0,N0=1.0,patch_hw=3):
         x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
-        X,Y = np.meshgrid(x,y)
+        X,Y = np.meshgrid(x,y,indexing='ij')
         mu = np.zeros((self.nx,self.ny),dtype=np.float32)
         ntheta,nspots = theta.shape
         i0 = eta*N0*texp
