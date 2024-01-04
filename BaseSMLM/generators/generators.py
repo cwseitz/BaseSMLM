@@ -17,11 +17,11 @@ class Brownian2D(Generator):
         theta[0,:] = x + x0; theta[1,:] = y + y0
         theta[2,:] = sigma; theta[3,:] = N0
         _adu = []; _spikes = []
+        if B0 is not None: muB = self._mu_b()
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b()
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -45,11 +45,11 @@ class Ring2D(Generator):
         theta[0,:] = x + x0; theta[1,:] = y + y0
         theta[2,:] = sigma; theta[3,:] = N0
         _adu = []; _spikes = []
+        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b()
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -74,11 +74,11 @@ class Disc2D(Generator):
         theta[2,:] = sigma; theta[3,:] = N0
         
         _adu = []; _spikes = []
+        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -118,11 +118,11 @@ class Ring2D_TwoState(TwoStateGenerator):
         self.states = self.simulate(nspots,nframes)
         
         _adu = []; _spikes = []
+        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,self.states[:,n],texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = np.zeros_like(muS)
@@ -161,11 +161,11 @@ class Disc2D_TwoState(TwoStateGenerator):
         self.states = self.simulate(nspots,nframes)
         
         _adu = []; _spikes = []
+        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,self.states[:,n],texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
-                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = np.zeros_like(muS)

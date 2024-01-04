@@ -238,6 +238,7 @@ class MLE2D_BFGS:
         sys.stderr = original_stderr
         theta_mle = result.x
         converged = result.success
+        niters = result.nit
         if converged:
             err = np.sqrt(np.diag(result.hess_inv))
         else:

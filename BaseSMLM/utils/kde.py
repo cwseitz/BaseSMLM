@@ -5,7 +5,7 @@ from ..psf.psf2d.psf2d import *
 class KDE:
     def __init__(self,spots):
         self.spots = spots
-    def get_kde(self,margin=100,pixel_size=108.3,kde_pixel_size=10.83,sigma=1.0,nxny=None,x_range=None,y_range=None):
+    def forward(self,margin=100,pixel_size=108.3,kde_pixel_size=10.83,sigma=1.0,nxny=None,x_range=None,y_range=None):
         patchw = int(round(3*sigma))
         a = int(pixel_size/kde_pixel_size)
         theta = a*self.spots[['x_mle','y_mle']].values
