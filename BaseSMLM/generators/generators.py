@@ -17,11 +17,11 @@ class Brownian2D(Generator):
         theta[0,:] = x + x0; theta[1,:] = y + y0
         theta[2,:] = sigma; theta[3,:] = N0
         _adu = []; _spikes = []
-        if B0 is not None: muB = self._mu_b()
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
+                muB = self._mu_b()
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -45,11 +45,11 @@ class Ring2D(Generator):
         theta[0,:] = x + x0; theta[1,:] = y + y0
         theta[2,:] = sigma; theta[3,:] = N0
         _adu = []; _spikes = []
-        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
+                muB = self._mu_b()
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -65,7 +65,7 @@ class Ring2D(Generator):
 class Disc2D(Generator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
-    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=0.0,nframes=1,offset=100.0,var=5.0,show=False):
+    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=None,nframes=1,offset=100.0,var=5.0,show=False):
         density = Disc(radius)
         theta = np.zeros((4,nspots))
         x,y = density.sample(nspots)
@@ -74,11 +74,11 @@ class Disc2D(Generator):
         theta[2,:] = sigma; theta[3,:] = N0
         
         _adu = []; _spikes = []
-        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
+                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = 0
@@ -95,14 +95,10 @@ class Disc2D(Generator):
 
     def show(self,adu,muS,muB,theta):
         fig,ax=plt.subplots(1,3)
-        ax[0].invert_yaxis(); ax[1].invert_yaxis()
         ax[0].imshow(adu,cmap='gray')
-        ax[1].imshow(muS,cmap='gray')
+        ax[1].imshow(muS/100,cmap='gray')
         ax[2].imshow(muB,cmap='gray')
-        ax[0].scatter(theta[1,:],theta[0,:],color='red',marker='x')
-        ax[1].scatter(theta[1,:],theta[0,:],color='red',marker='x')
-        plt.show()       
-       
+        plt.show()        
         
 class Ring2D_TwoState(TwoStateGenerator):
     def __init__(self,nx,ny):
@@ -118,11 +114,11 @@ class Ring2D_TwoState(TwoStateGenerator):
         self.states = self.simulate(nspots,nframes)
         
         _adu = []; _spikes = []
-        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
             muS = self._mu_s(theta,self.states[:,n],texp=texp,eta=eta,N0=N0)
             S = self.shot_noise(muS)
             if B0 is not None:
+                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = np.zeros_like(muS)
@@ -141,31 +137,30 @@ class Ring2D_TwoState(TwoStateGenerator):
     def show(self,adu,muS,muB,theta):
         fig,ax=plt.subplots(1,3)
         ax[0].imshow(adu,cmap='gray')
-        #ax[0].scatter(theta[1,:],theta[0,:],color='red',marker='x')
         ax[1].imshow(muS,cmap='gray')
         ax[2].imshow(muB,cmap='gray')
-        #ax[1].scatter(theta[1,:],theta[0,:],color='red',marker='x')
         plt.show()
         
 class Disc2D_TwoState(TwoStateGenerator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
-    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=None,nframes=100,offset=100.0,var=5.0,show=False):
+    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N00=20.0,N01=300.0,eta=1.0,gain=1.0,B0=None,nframes=100,offset=100.0,var=5.0,p=None,show=False):
         density = Disc(radius)
         theta = np.zeros((4,nspots))
         x,y = density.sample(nspots)
         x0 = self.nx/2; y0 = self.ny/2
         theta[0,:] = x + x0; theta[1,:] = y + y0
-        theta[2,:] = sigma; theta[3,:] = N0
+        theta[2,:] = sigma; theta[3,:] = N00
         
-        self.states = self.simulate(nspots,nframes)
+        self.states = self.simulate(nspots,nframes,p=p,N00=N00,N01=N01)
         
         _adu = []; _spikes = []
-        if B0 is not None: muB = self._mu_b(B0)
         for n in range(nframes):
-            muS = self._mu_s(theta,self.states[:,n],texp=texp,eta=eta,N0=N0)
+            print(f'Simulating frame {n}')
+            muS = self._mu_s(theta,self.states[:,n],texp=texp,eta=eta)
             S = self.shot_noise(muS)
             if B0 is not None:
+                muB = self._mu_b(B0)
                 B = self.shot_noise(muB)
             else:
                 B = np.zeros_like(muS)
@@ -190,4 +185,5 @@ class Disc2D_TwoState(TwoStateGenerator):
         #ax[1].scatter(theta[1,:],theta[0,:],color='red',marker='x')
         plt.show()
         
+              
         

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from perlin_noise import PerlinNoise
 from BaseSMLM.psf.psf2d.psf2d import *
+from scipy.stats import beta, bernoulli, poisson
 from hmmlearn import hmm
 
 class Density:
@@ -67,6 +68,7 @@ class Generator:
         bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
         bg = 1 + np.array(bg)
         rate = B0*(bg/bg.max())
+        rate = B0*np.ones((nx,ny))
         return rate
        
     def shot_noise(self,rate):
@@ -96,37 +98,32 @@ class Generator:
         np.add.at(spikes, (x_indices, y_indices), 1)
 
         return spikes
-        
+
 class TwoStateGenerator:
     def __init__(self,nx,ny):
         self.nx = nx
         self.ny = ny
-        
-    def simulate(self, nspots, nframes, texp=1.0, k_on=0.5, k_off=0.5):
 
-        model = hmm.MultinomialHMM(n_components=2,n_trials=1)
-        model.startprob_ = np.array([1.0, 0.0])  # Start in state 'off'
-        model.transmat_ = np.array([[1 - k_on*texp, k_on*texp], [k_off*texp, 1 - k_off*texp]])
-        model.emissionprob_ = np.array([[1, 0], [0, 1]])  # Emissions are the hidden states
-        state_matrix = []
-        for n in range(nspots):
-            _, states = model.sample(n_samples=nframes)
-            state_matrix.append(states)
-        state_matrix = np.array(state_matrix)
-        return state_matrix
+    def simulate(self, nspots, nframes, p=None, N00=20.0, N01=300.0):
+        if p is None:
+            a = b = 2
+            p = beta.rvs(a, b, size=(nspots,))
+        else:
+            p = p*np.ones((nspots,))
+        z = np.array([bernoulli.rvs(pi, size=(nframes,)) for pi in p])
+        x = N01*z + N00*(1-z)
+        return x
 
-
-    def _mu_s(self,theta,state,texp=1.0,eta=1.0,N0=1.0,B0=0.0,patch_hw=3):
+    def _mu_s(self,theta,states,texp=1.0,eta=1.0,B0=0.0,patch_hw=3):
         x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
-        X,Y = np.meshgrid(x,y)
+        X,Y = np.meshgrid(x,y,indexing='ij')
         mu = np.zeros((self.nx,self.ny),dtype=np.float32)
         ntheta,nspots = theta.shape
-        i0 = eta*N0*texp
         for n in range(nspots):
             x0,y0,sigma,N0 = theta[:,n]
             patchx, patchy = int(round(x0))-patch_hw, int(round(y0))-patch_hw
             x0p = x0-patchx; y0p = y0-patchy
-            this_mu = i0*state[n]*lamx(X,y0p,sigma)*lamy(Y,x0p,sigma)
+            this_mu = eta*texp*states[n]*lamx(X,x0p,sigma)*lamy(Y,y0p,sigma)
             mu[patchx:patchx+2*patch_hw,patchy:patchy+2*patch_hw] += this_mu
         return mu
 
@@ -136,6 +133,7 @@ class TwoStateGenerator:
         bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
         bg = 1 + np.array(bg)
         rate = B0*(bg/bg.max())
+        rate = B0*np.ones((nx,ny))
         return rate
        
     def shot_noise(self,rate):
@@ -166,6 +164,7 @@ class TwoStateGenerator:
 
         return spikes
         
+
     
         
 
