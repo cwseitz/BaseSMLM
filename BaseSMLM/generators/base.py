@@ -33,21 +33,47 @@ class Ring(Density):
         y = self.radius * np.sin(thetas+phase)
         return x,y
 
-class Brownian(Density):
-    """Brownian motion or a Gaussian chain"""
-    def __init__(self,sigma):
+class GaussianRing(Density):
+    """A ring of Gaussians with a random phase"""
+    def __init__(self,radius,sigma_ring=3.0):
         super().__init__()
-        self.sigma=sigma
+        self.radius=radius
+        self.sigma_ring=sigma_ring
     def sample(self,n):
-        chain = np.zeros((n,2))
-        chain[1:,:] = np.random.normal(0,self.sigma,size=(n-1,2))
-        chain = np.cumsum(chain, axis=0)
-        return chain[:,1], chain[:,0]
+        thetas = np.arange(0,n,1)*2*np.pi/n
+        phase = np.random.uniform(0,2*np.pi)
+        x = self.radius * np.cos(thetas+phase)
+        y = self.radius * np.sin(thetas+phase)
+        xnoise = np.random.normal(size=x.shape,scale=self.sigma_ring)
+        ynoise = np.random.normal(size=y.shape,scale=self.sigma_ring)
+        x = x + xnoise
+        y = y + ynoise
+        return x,y
 
 class Generator:
     def __init__(self,nx,ny):
         self.nx = nx
         self.ny = ny
+    def sample_frames(self,theta,nframes,texp,eta,N0,B0,gain,offset,var):
+        _adu = []; _spikes = []
+        for n in range(nframes):
+            muS = self._mu_s(theta,texp=texp,eta=eta,N0=N0)
+            S = self.shot_noise(muS)
+            if B0 is not None:
+                muB = self._mu_b(B0)
+                B = self.shot_noise(muB)
+            else:
+                B = 0
+            adu = gain*(S+B) + self.read_noise(offset=offset,var=var)
+            adu = np.clip(adu,0,None)
+            adu = np.squeeze(adu)
+            spikes = self.spikes(theta)
+            _adu.append(adu); _spikes.append(spikes)
+            if show:
+                self.show(adu,muS,muB,theta)
+        adu = np.squeeze(np.array(_adu))
+        spikes = np.squeeze(np.array(_spikes))
+        return adu,spikes
     def _mu_s(self,theta,texp=1.0,eta=1.0,N0=1.0,patch_hw=3):
         x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
         X,Y = np.meshgrid(x,y,indexing='ij')
@@ -63,12 +89,11 @@ class Generator:
         return mu
 
     def _mu_b(self,B0):
-        nx,ny = self.nx,self.ny
-        noise = PerlinNoise(octaves=1,seed=None)
-        bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
-        bg = 1 + np.array(bg)
-        rate = B0*(bg/bg.max())
-        rate = B0*np.ones((nx,ny))
+        #noise = PerlinNoise(octaves=1,seed=None)
+        #bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
+        #bg = 1 + np.array(bg)
+        #rate = B0*(bg/bg.max())
+        rate = B0*np.ones((self.nx,self.ny))
         return rate
        
     def shot_noise(self,rate):
@@ -77,7 +102,7 @@ class Generator:
         return electrons
                 
     def read_noise(self,offset=100.0,var=5.0):
-        """Used primarily for sCMOS cameras"""
+        """Gaussian readout noise"""
         noise = np.random.normal(offset,np.sqrt(var),size=(self.nx,self.ny))
         return noise
         
@@ -104,15 +129,35 @@ class TwoStateGenerator:
         self.nx = nx
         self.ny = ny
 
-    def simulate(self, nspots, nframes, p=None, N00=20.0, N01=300.0):
+    def sample_states(self, nspots, nframes, p=None, N00=20.0, N01=300.0, a=2, b=2):
         if p is None:
-            a = b = 2
             p = beta.rvs(a, b, size=(nspots,))
         else:
             p = p*np.ones((nspots,))
         z = np.array([bernoulli.rvs(pi, size=(nframes,)) for pi in p])
         x = N01*z + N00*(1-z)
         return x
+        
+    def sample_frames(self,theta,nframes,states,texp,eta,B0,gain,offset,var):
+        _adu = []; _spikes = []
+        for n in range(nframes):
+            print(f'Simulating frame {n}')
+            muS = self._mu_s(theta,states[:,n],texp=texp,eta=eta)
+            S = self.shot_noise(muS)
+            if B0 is not None:
+                muB = self._mu_b(B0)
+                B = self.shot_noise(muB)
+            else:
+                B = np.zeros_like(muS)
+            adu = gain*(S+B) + self.read_noise(offset=offset,var=var)
+            adu = np.clip(adu,0,None)
+            adu = np.squeeze(adu)
+            spikes = self.spikes(theta,78)
+            _adu.append(adu); _spikes.append(spikes)
+                            
+        adu = np.squeeze(np.array(_adu))
+        spikes = np.squeeze(np.array(_spikes))
+        return adu,spikes
 
     def _mu_s(self,theta,states,texp=1.0,eta=1.0,B0=0.0,patch_hw=3):
         x = np.arange(0,2*patch_hw); y = np.arange(0,2*patch_hw)
@@ -120,7 +165,7 @@ class TwoStateGenerator:
         mu = np.zeros((self.nx,self.ny),dtype=np.float32)
         ntheta,nspots = theta.shape
         for n in range(nspots):
-            x0,y0,sigma,N0 = theta[:,n]
+            x0,y0,sigma = theta[:,n]
             patchx, patchy = int(round(x0))-patch_hw, int(round(y0))-patch_hw
             x0p = x0-patchx; y0p = y0-patchy
             this_mu = eta*texp*states[n]*lamx(X,x0p,sigma)*lamy(Y,y0p,sigma)
@@ -128,12 +173,11 @@ class TwoStateGenerator:
         return mu
 
     def _mu_b(self,B0):
-        nx,ny = self.nx,self.ny
-        noise = PerlinNoise(octaves=1,seed=None)
-        bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
-        bg = 1 + np.array(bg)
-        rate = B0*(bg/bg.max())
-        rate = B0*np.ones((nx,ny))
+        #noise = PerlinNoise(octaves=1,seed=None)
+        #bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
+        #bg = 1 + np.array(bg)
+        #rate = B0*(bg/bg.max())
+        rate = B0*np.ones((self.nx,self.ny))
         return rate
        
     def shot_noise(self,rate):
