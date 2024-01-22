@@ -89,10 +89,6 @@ class Generator:
         return mu
 
     def _mu_b(self,B0):
-        #noise = PerlinNoise(octaves=1,seed=None)
-        #bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
-        #bg = 1 + np.array(bg)
-        #rate = B0*(bg/bg.max())
         rate = B0*np.ones((self.nx,self.ny))
         return rate
        
@@ -173,10 +169,6 @@ class TwoStateGenerator:
         return mu
 
     def _mu_b(self,B0):
-        #noise = PerlinNoise(octaves=1,seed=None)
-        #bg = [[noise([i/nx,j/ny]) for j in range(nx)] for i in range(ny)]
-        #bg = 1 + np.array(bg)
-        #rate = B0*(bg/bg.max())
         rate = B0*np.ones((self.nx,self.ny))
         return rate
        
@@ -186,7 +178,7 @@ class TwoStateGenerator:
         return electrons
                 
     def read_noise(self,offset=100.0,var=5.0):
-        """Used primarily for sCMOS cameras"""
+        """Gaussian readout noise"""
         noise = np.random.normal(offset,np.sqrt(var),size=(self.nx,self.ny))
         return noise
         

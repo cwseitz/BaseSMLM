@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from .base import *
 
-class Disc2D(Generator):
+class Ring2D(Generator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
-    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=None,nframes=1,offset=100.0,var=5.0,show=False):
+    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,
+                B0=None,nframes=1,offset=100.0,var=5.0,show=False):
         density = Ring(radius)
         theta = np.zeros((4,nspots))
         x,y = density.sample(nspots)
@@ -18,7 +19,8 @@ class Disc2D(Generator):
 class Disc2D(Generator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
-    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,B0=None,nframes=1,offset=100.0,var=5.0,show=False):
+    def forward(self,radius,nspots,sigma=0.92,texp=1.0,N0=1.0,eta=1.0,gain=1.0,
+                B0=None,nframes=1,offset=100.0,var=5.0,show=False):
         density = Disc(radius)
         theta = np.zeros((4,nspots))
         x,y = density.sample(nspots)
@@ -60,13 +62,6 @@ class Disc2D_TwoState(TwoStateGenerator):
         adu,spikes = self.sample_frames(theta,nframes,states,texp,eta,B0,gain,offset,var)
         return adu,spikes,theta
         
-    def show(self,adu,muS,muB,theta):
-        fig,ax=plt.subplots(1,3)
-        ax[0].imshow(adu,cmap='gray')
-        ax[1].imshow(muS,cmap='gray')
-        ax[2].imshow(muB,cmap='gray')
-        plt.show()
-        
 class GaussianRing2D_TwoState(TwoStateGenerator):
     def __init__(self,nx,ny):
         super().__init__(nx,ny)
@@ -84,11 +79,5 @@ class GaussianRing2D_TwoState(TwoStateGenerator):
         adu,spikes = self.sample_frames(theta,nframes,states,texp,eta,B0,gain,offset,var)
         return adu,spikes,theta
         
-    def show(self,adu,muS,muB,theta):
-        fig,ax=plt.subplots(1,3)
-        ax[0].imshow(adu,cmap='gray')
-        ax[1].imshow(muS,cmap='gray')
-        ax[2].imshow(muB,cmap='gray')
-        plt.show()     
               
         
