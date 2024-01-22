@@ -8,7 +8,7 @@ def crlb3d(theta,cmos_params):
     x0,y0,z0,sigma,N0 = theta
     eta,texp,gain,offset,var = cmos_params
     x = np.arange(0,nx); y = np.arange(0,ny)
-    X,Y = np.meshgrid(x,y)
+    X,Y = np.meshgrid(x,y,indexing='ij')
     sigma_x = sx(z0); sigma_y = sy(z0)
     lam = lamx(X,x0,sigma_x)*lamy(Y,y0,sigma_y)
     i0 = gain*eta*texp*N0

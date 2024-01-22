@@ -27,7 +27,7 @@ class KDE:
         
         ns,nd = theta.shape
         x = np.arange(0,2*patchw); y = np.arange(0,2*patchw)
-        X,Y = np.meshgrid(x,y)
+        X,Y = np.meshgrid(x,y,indexing='ij')
 
         for n in range(ns):
             x0,y0 = theta[n,:]

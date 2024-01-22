@@ -12,7 +12,7 @@ def isologlike3d(theta,adu,cmos_params):
     sigma_x = sx(z0); sigma_y = sy(z0)
     nx, ny = offset.shape
     x = np.arange(0,nx); y = np.arange(0,ny)
-    X,Y = np.meshgrid(x,y)
+    X,Y = np.meshgrid(x,y,indexing='ij')
     lam = lamx(X,x0,sigma_x)*lamy(Y,y0,sigma_y)
     i0 = gain*eta*texp*N0
     muprm = i0*lam + var

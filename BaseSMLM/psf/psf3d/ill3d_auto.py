@@ -34,7 +34,7 @@ def isologlike_auto3d(adu,eta,texp,gain,var):
         x0,y0,z0,N0 = theta
         sigma_x = sx(z0); sigma_y = sy(z0)
         x = np.arange(0,nx); y = np.arange(0,ny)
-        X,Y = np.meshgrid(x,y)
+        X,Y = np.meshgrid(x,y,indexing='ij')
         lam = lamx(X,x0,sigma_x)*lamy(Y,y0,sigma_y)
         i0 = N0*eta*gain*texp
         muprm = i0*lam + var

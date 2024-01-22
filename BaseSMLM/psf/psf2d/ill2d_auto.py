@@ -10,7 +10,7 @@ def isologlike_auto2d(adu,eta,texp,gain,var):
         lx, ly = adu.shape
         x0,y0,sigma,N0 = theta
         alpha = np.sqrt(2)*sigma
-        X,Y = np.meshgrid(np.arange(0,lx),np.arange(0,ly))
+        X,Y = np.meshgrid(np.arange(0,lx),np.arange(0,ly),indexing='ij')
         lamdx = 0.5*(erf((X+0.5-x0)/alpha) - erf((X-0.5-x0)/alpha))
         lamdy = 0.5*(erf((Y+0.5-y0)/alpha) - erf((Y-0.5-y0)/alpha))
         lam = lamdx*lamdy

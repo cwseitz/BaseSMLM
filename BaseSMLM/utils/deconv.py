@@ -12,7 +12,7 @@ class RLDeconvolver:
         alpha = np.sqrt(2)*sigma
         x0,y0 = 3,3
         x = np.arange(0,nx); y = np.arange(0,ny)
-        X,Y = np.meshgrid(x,y)
+        X,Y = np.meshgrid(x,y,indexing='ij')
         lambdx = 0.5*(erf((X+0.5-x0)/alpha)-erf((X-0.5-x0)/alpha))
         lambdy = 0.5*(erf((Y+0.5-y0)/alpha)-erf((Y-0.5-y0)/alpha))
         lam = lambdx*lambdy

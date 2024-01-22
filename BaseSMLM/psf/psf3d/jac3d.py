@@ -5,7 +5,7 @@ from .ill3d_auto import *
 def jaciso3d(theta,adu,cmos_params):
     lx, ly = adu.shape
     ntheta = len(theta)
-    X,Y = np.meshgrid(np.arange(0,lx),np.arange(0,ly))
+    X,Y = np.meshgrid(np.arange(0,lx),np.arange(0,ly),indexing='ij')
     J1 = jac1(X,Y,theta,cmos_params)
     J1 = J1.reshape((ntheta,lx**2))
     J2 = jac2(adu,X,Y,theta,cmos_params)
