@@ -7,3 +7,4 @@ from .animate import *
 from .distribution import *
 from .track import *
 from .dataset import *
+from .cluster import *
