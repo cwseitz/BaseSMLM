@@ -211,7 +211,6 @@ class MLE2D_BFGS:
         plt.tight_layout()
 
     def optimize(self, max_iters=1000, lr=None, plot_fit=False):
-
         theta = np.zeros_like(self.theta0)
         theta += self.theta0
         thetat = []; loglikes = []

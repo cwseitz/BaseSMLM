@@ -30,8 +30,8 @@ def make_animation(stack, spots):
 
     # Set the initial step to 0 to start from frame 0
     viewer.dims.set_current_step(0,0)
-    viewer.add_points(rraw, name='Raw', size=3, face_color='red', symbol='x')
-    viewer.add_points(rfit, name='Fit', size=3, face_color='blue', symbol='x')
+    viewer.add_points(rraw, name='Raw', size=0.5, face_color='red', symbol='o')
+    viewer.add_points(rfit, name='Fit', size=0.5, face_color='blue', symbol='o')
 
     # Create the animation by connecting the update function to the keyframes
     viewer.dims.events.current_step.connect(update_frame)

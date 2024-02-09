@@ -8,17 +8,29 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 
 class RTCluster:
-    def __init__(self,X,r,T):
-        self.X = X
+    def __init__(self,spots,r,T):
+        self.spots = spots
         self.r = r
         self.T = T
         
-    def show_components(self,idx,idxx,means,labels):
-        fig,ax=plt.subplots()
-        ax.scatter(self.X[idxx,0], self.X[idxx,1], c=labels, cmap='rainbow', s=1,marker='x')
-        ax.scatter(self.X[idx,0], self.X[idx,1], color='black', s=1,marker='x')
-        ax.scatter(means[:,0], means[:,1], color='red', s=10,marker='o')
-        ax.set_aspect(1.0)
+    def show_components(self,idx,idxx,means,labels,grads):
+        fig,ax=plt.subplots(1,2,figsize=(7,3))
+        A = 1/1000
+        ax[0].scatter(A*self.X[idxx,0], A*self.X[idxx,1], c=labels, cmap='rainbow', s=1,marker='x')
+        ax[0].scatter(A*self.X[idx,0], A*self.X[idx,1], color='black', s=1,marker='x')
+        ax[0].scatter(A*means[:,0], A*means[:,1], color='red', s=10,marker='o')
+        bins = np.logspace(3,6,30)
+        vals, bins = np.histogram(grads,bins=bins,density=True)
+        ax[1].scatter(bins[:-1],vals,color='black',alpha=0.5)
+        ax[0].set_xlabel('x (um)')
+        ax[0].set_ylabel('y (um)')
+        ax[0].set_aspect(1.0)
+        ax[1].set_xlabel(r'$\log R_{g}^{2}$')
+        ax[1].set_ylabel('Density')
+        ax[1].set_xscale('log')
+        ax[1].set_yscale('log')
+        ax[1].grid()
+        plt.tight_layout()
         plt.show()
         
     def radius_gyration(self,X):
@@ -63,8 +75,17 @@ class RTCluster:
         ax2.tick_params(axis="y", which="both", left=False, right=False, labelleft=False)
         ax2.tick_params(axis="x", which="both", top=False)
         plt.show()
-        
-    def cluster(self,showK=False,show_clusters=False,fit_model=False,show_fit=False,min_size=6):
+                
+    def cluster(self,showK=False,show_clusters=False,fit_model=False,plot_ind_fit=False,
+                show_fit=False,min_size=10,hw=5000,xcol='x [nm]',ycol='y [nm]'):
+        spots = self.spots
+        xcenter,ycenter = np.mean(spots[xcol]),np.mean(spots[ycol])
+        xlim = [xcenter-hw,xcenter+hw]; ylim = [ycenter-hw,ycenter+hw]
+        spots = spots.loc[(spots[xcol] > xlim[0]) & 
+                          (spots[xcol] < xlim[1]) & 
+                          (spots[ycol] > ylim[0]) & 
+                          (spots[ycol] < ylim[1])]
+        self.X = spots[[xcol,ycol]].values
         N = self.X.shape[0]
         D = distance.cdist(self.X,self.X)
         D = D[:N, :N]
@@ -81,20 +102,25 @@ class RTCluster:
             n_components, labels = connected_components(csr,directed=False)
             means = np.empty((n_components, 2))
             coordinates = np.squeeze(self.X[idxx])
+            grads = []
             for component in range(n_components):
                 component_indices = np.where(labels == component)[0]
                 component_coordinates = coordinates[component_indices]
                 num_points,_ = component_coordinates.shape
                 means[component] = np.mean(component_coordinates, axis=0)
+                if num_points > min_size:
+                    grad = self.radius_gyration(component_coordinates)
+                    grads.append(grad)
                 
             if show_clusters:
-                self.show_components(idx,idxx,means,labels)
+                self.show_components(idx,idxx,means,labels,grads)
                 
             if fit_model:
                 component_means = []
                 component_covariances = []
                 component_weights = []
                 loglikes = []
+                entropies = []
                 for component in range(n_components):
                     print(f'Fitting VBGMM component {component}')
                     component_indices = np.where(labels == component)[0]
@@ -118,6 +144,13 @@ class RTCluster:
                         component_weights.append(model.weights_)
                         this_loglike = np.sum(model.score_samples(component_coordinates))
                         loglikes.append(this_loglike)
+                        samples,_ = model.sample(n_samples=1000)
+                        shannon = -1*np.mean(model.score_samples(samples))
+                        entropies.append(shannon)
+                        print(f'Monte Carlo Entropy Estimate: {shannon}')
+                        
+                        if plot_ind_fit:
+                            self.plot_fit(component_coordinates,model)
    
                 loglikes = np.array(loglikes)
                 combined_means = np.concatenate(component_means, axis=0)
@@ -139,7 +172,7 @@ class RTCluster:
                 
             else:
                 score = None
-        return score
+        return score,grads
                     
 class RTGridSearch:
     def __init__(self,X):
